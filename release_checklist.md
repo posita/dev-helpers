@@ -36,7 +36,9 @@ The following assumes you are working from the repository root and have a develo
 
 * [ ] ``git push [--force] origin latest vX.Y.Z gh-pages``
 
-* [ ] ``./.tox/check/bin/twine upload dist/*-X.Y.Z[-.]*``
+* [ ] ``./.tox/check/bin/twine upload [--repository testpypi] [--username __token__] --sign dist/*-X.Y.Z[-.]*``
+  * See [Using TestPyPI with pip](https://packaging.python.org/guides/using-testpypi/#using-testpypi-with-pip)
+  * Optionally, try to install from test.pypi.org: ``pip install --index-url 'https://test.pypi.org/simple' --extra-index-url 'https://pypi.org/simple' numerary``
 
 * [ ] ``git checkout master``
 
