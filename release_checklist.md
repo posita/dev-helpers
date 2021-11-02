@@ -13,7 +13,7 @@
   Thank you!
 -->
 
-The following assumes you are working from the repository root and have a development environment similar to one created by ``pip install install --editable '.[dev]'``. (See, e.g., [``./helpers/venvsetup.sh``](venvsetup.sh).)
+The following assumes you are working from the repository root and have a development environment similar to one created by ``pip install install --editable '.[dev]' && python -m pre_commit install``.
 
 * [ ] Update docs and commit
   * Solidify current release start section for next release in [release notes](../docs/notes.md)
