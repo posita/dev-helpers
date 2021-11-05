@@ -55,7 +55,7 @@ perl -p -i -e "s{^__version__\\b([^#=]*)=\\s*\\(\\s*0\\s*,\\s*0\\s*,\\s*0\\s*,?\
 perl -p -i -e "s{\\.github\\.io/${PROJECT}/latest/([^) \"]*)} {\\.github\\.io/${PROJECT}/${VERS}/\\1}g ; s{/${PROJECT}/([^/]+/)*latest/} {/${PROJECT}/\\1${TAG}/}g ; s{//pypi\\.org/([^/]+/)?${PKG}/} {//pypi.org/\\1${PKG}/${VERS_PATCH}/}g ; s{/pypi/([^/]+/)?${PKG}\\.svg\\)} {/pypi/\\1${PKG}/${VERS_PATCH}.svg)}g" setup.cfg README.md docs/contrib.md
 
 problem_areas="$(
-    grep -En '/latest\b' /dev/null README.md docs/*.md || [ "${?}" -eq 1 ]
+    grep -En "${PROJECT}/latest\\b" /dev/null README.md docs/*.md || [ "${?}" -eq 1 ]
     grep -En "^#+\\s+${MAJOR}\\.${MINOR}\\.${PATCH}([^[:alnum:]]|$)" /dev/null docs/notes.md || [ "${?}" -eq 1 ]
 )"
 
