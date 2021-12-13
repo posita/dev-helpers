@@ -30,7 +30,7 @@ The following assumes you are working from the repository root and have a develo
   * Updates ``gh-pages``
   * See [``./helpers/draft-release.sh``](draft-release.sh) for details
 
-* [ ] ``git tag --force --sign vX.Y.X && git tag --force latest`` and summarize [release notes](../docs/notes.md)
+* [ ] ``git tag --force --sign vX.Y.Z && git tag --force latest`` and summarize [release notes](../docs/notes.md)
 
 * [ ] ``./.tox/check/bin/mike serve`` and spot check docs (some images with external references might be missing)
 
@@ -38,7 +38,7 @@ The following assumes you are working from the repository root and have a develo
 
 * [ ] ``./.tox/check/bin/twine upload [--repository testpypi] [--username __token__] --sign dist/*-X.Y.Z-*.whl``
   * See [Using TestPyPI with pip](https://packaging.python.org/guides/using-testpypi/#using-testpypi-with-pip)
-  * Optionally, try to install from test.pypi.org: ``pip install --index-url 'https://test.pypi.org/simple' --extra-index-url 'https://pypi.org/simple' numerary``
+  * Optionally, try to install from test.pypi.org: ``pip install --index-url 'https://test.pypi.org/simple' --extra-index-url 'https://pypi.org/simple' 'PACKAGE==X.Y.Z'``
 
 * [ ] ``git checkout master``
 
