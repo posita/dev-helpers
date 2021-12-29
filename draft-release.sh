@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 # ======================================================================================
 # Copyright and other protections apply. Please see the accompanying LICENSE file for
 # rights and restrictions governing use of this software. All rights not expressly
@@ -51,8 +51,19 @@ TAG="v${VERS_PATCH}"
 set -ex
 cd "${_REPO_DIR}"
 git checkout -b "${VERS_PATCH}-release"
-perl -p -i -e "s{^__version__\\b([^#=]*)=\\s*\\(\\s*0\\s*,\\s*0\\s*,\\s*0\\s*,?\\s*\\)(\\s*#.*)?\$} {__version__\\1= (${MAJOR}, ${MINOR}, ${PATCH})\\2}g" "${PROJECT}/version.py"
-perl -p -i -e "s{\\.github\\.io/${PROJECT}/latest/([^) \"]*)} {\\.github\\.io/${PROJECT}/${VERS}/\\1}g ; s{/${PROJECT}/([^/]+/)*latest/} {/${PROJECT}/\\1${TAG}/}g ; s{//pypi\\.org/([^/]+/)?${PKG}/} {//pypi.org/\\1${PKG}/${VERS_PATCH}/}g ; s{/pypi/([^/]+/)?${PKG}\\.svg\\)} {/pypi/\\1${PKG}/${VERS_PATCH}.svg)}g" setup.cfg README.md docs/contrib.md
+perl -p -i -e "
+  s{^__version__\\b([^#=]*)=\\s*\\(\\s*0\\s*,\\s*0\\s*,\\s*0\\s*,?\\s*\\)(\\s*#.*)?\$} {__version__\\1= (${MAJOR}, ${MINOR}, ${PATCH})\\2}g
+" "${PROJECT}/version.py"
+# perl -p -i -e "
+#   s{^__version__\\b([^#=]*)=\\s*\\(\\s*\\d+\\s*,\\s*\\d+\\s*,\\s*\\d+\\s*,?\\s*\\)(\\s*#.*)?\$} {__version__\\1= (${MAJOR}, ${MINOR}, ${PATCH})\\2}g
+# " "${PROJECT}/__init__.py"
+
+perl -p -i -e "
+  s{\\.github\\.io/${PROJECT}/latest/([^) \"]*)} {\\.github\\.io/${PROJECT}/${VERS}/\\1}g ;
+  s{/${PROJECT}/([^/]+/)*latest([/?])} {/${PROJECT}/\\1${TAG}\\2/}g ;
+  s{//pypi\\.org/([^/]+/)?${PKG}/} {//pypi.org/\\1${PKG}/${VERS_PATCH}/}g ;
+  s{/pypi/([^/]+/)?${PKG}\\.svg\\)} {/pypi/\\1${PKG}/${VERS_PATCH}.svg)}g
+" setup.cfg README.md docs/contrib.md
 
 problem_areas="$(
     grep -En "${PROJECT}/latest\\b" /dev/null README.md docs/*.md || [ "${?}" -eq 1 ]
