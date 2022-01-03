@@ -7,19 +7,76 @@
 # software in any capacity.
 # ======================================================================================
 
+set -e
 _MY_DIR="$( cd "$( dirname "${0}" )" && pwd )"
-_REPO_DIR="$( cd "${_MY_DIR}${_MY_DIR:+/}.." && pwd )"
-set -ex
-[ -d "${_REPO_DIR}" ]
 [ "${_MY_DIR}/draft-release.sh" -ef "${0}" ]
-cd "${_REPO_DIR}"
 
-if [ "${#}" -ne 3 ] ; then
-    echo 1>&2 "usage: $( basename "${0}" ) MAJOR MINOR PATCH"
+function _yes_no () {
+    printf "${1}${1:+ }[Y/n] "
+    local sh=$( ps -o comm -p "${$}" | awk 'NR == 2' )
+
+    while true ; do
+        if [ "${sh%[/-]zsh}" != "${sh}" ] ; then
+            read -k 1 -s  # zsh
+        else
+            read -n 1 -s  # everywhere else
+        fi
+
+        case "${REPLY}" in
+            Y|y|$'\n'|'')
+                REPLY=y
+                echo 'yes'
+                break
+                ;;
+            N|n)
+                REPLY=n
+                echo 'no'
+                break
+                ;;
+        esac
+
+        printf '\n[Y/n] '
+    done
+}
+
+if [ "${#}" -ne 0 ] ; then
+    echo 1>&2 "usage: $( basename "${0}" )"
 
     exit 1
 fi
 
+for _repo_dir_candidate in "${_MY_DIR}${_MY_DIR:+/}.." "${PWD}" ; do
+    if [ -d "${_repo_dir_candidate}/.git" ] ; then
+        _yes_no "Use \"${_repo_dir_candidate}\" as the repository directory?"
+
+        if [ "${REPLY}" = y ] ; then
+            _REPO_DIR="$( cd "${_repo_dir_candidate}" && pwd )"
+            break
+        fi
+    fi
+done
+
+if [ -z "${_REPO_DIR}" ] ; then
+    echo 1>&2 "$( basename "${0}" ): unable to find repository directory"
+
+    exit 1
+fi
+
+set -x
+cd "${_REPO_DIR}"
+git update-index -q --refresh
+VERSION="$( python -m setuptools_scm | perl -pe 's/^Guessed Version ([^ ]+).*$/\1/' )"
+set +x
+
+if ! echo "${VERSION}" | grep -Eq '^\d+\.\d+\.\d+$' ; then
+    _yes_no "Really use \"${VERSION}\" as version?"
+
+    if [ "${REPLY}" != y ] ; then
+        exit 1
+    fi
+fi
+
+set -x
 _GET_PKG_PY="$( cat <<EOF
 import configparser, sys
 config = configparser.ConfigParser()
@@ -41,82 +98,61 @@ EOF
 
 PKG="$( python -c "${_GET_PKG_PY}" "${_REPO_DIR}/setup.cfg" )"
 PROJECT="$( python -c "${_GET_PROJECT_PY}" "${_REPO_DIR}/setup.cfg" )"
-MAJOR="${1}"
-MINOR="${2}"
-PATCH="${3}"
-VERS="${MAJOR}.${MINOR}"
-VERS_PATCH="${VERS}.${PATCH}"
+VERSION="$( echo "${VERSION}" | perl -pe 's/\+.*$//' )"
+VERS="$( echo "${VERSION}" | perl -pe 's/^(\d+\.\d+)\.\d+(\.[^.]+)*$/\1/' )"
+VERS_PATCH="$( echo "${VERSION}" | perl -pe 's/^(\d+\.\d+\.\d+)(\.[^.]+)*$/\1/' )"
 TAG="v${VERS_PATCH}"
 
-set -ex
-cd "${_REPO_DIR}"
-git checkout -b "${VERS_PATCH}-release"
-perl -p -i -e "
-  s{^__version__\\b([^#=]*)=\\s*\\(\\s*0\\s*,\\s*0\\s*,\\s*0\\s*,?\\s*\\)(\\s*#.*)?\$} {__version__\\1= (${MAJOR}, ${MINOR}, ${PATCH})\\2}g
-" "${PROJECT}/version.py"
-# perl -p -i -e "
-#   s{^__version__\\b([^#=]*)=\\s*\\(\\s*\\d+\\s*,\\s*\\d+\\s*,\\s*\\d+\\s*,?\\s*\\)(\\s*#.*)?\$} {__version__\\1= (${MAJOR}, ${MINOR}, ${PATCH})\\2}g
-# " "${PROJECT}/__init__.py"
+if [ -f README.md ] ; then
+    perl -p -i -e "
+  s{\\.github\\.io/${PROJECT}/\\d+\\.\\d+\\/([^) \"]*)} {\\.github\\.io/${PROJECT}/${VERS}/\\1}g ;
+  s{/${PROJECT}/([^/]+/)*v\\d+\\.\\d+\\.\\d+([/?])} {/${PROJECT}/\\1${TAG}\\2}g ;
+  s{//pypi\\.org/([^/]+/)?${PKG}/\\d+\\.\\d+\\.\\d+/} {//pypi.org/\\1${PKG}/${VERS_PATCH}/}g ;
+  s{/pypi/([^/]+/)?${PKG}/\\d+\\.\\d+\\.\\d+\\.svg\\)} {/pypi/\\1${PKG}/${VERS_PATCH}.svg)}g ;
+" README.md
+fi
 
-perl -p -i -e "
-  s{\\.github\\.io/${PROJECT}/latest/([^) \"]*)} {\\.github\\.io/${PROJECT}/${VERS}/\\1}g ;
-  s{/${PROJECT}/([^/]+/)*latest([/?])} {/${PROJECT}/\\1${TAG}\\2/}g ;
-  s{//pypi\\.org/([^/]+/)?${PKG}/} {//pypi.org/\\1${PKG}/${VERS_PATCH}/}g ;
-  s{/pypi/([^/]+/)?${PKG}\\.svg\\)} {/pypi/\\1${PKG}/${VERS_PATCH}.svg)}g
-" setup.cfg README.md docs/contrib.md
+if [ -f mkdocs.yml ] ; then
+    perl -p -i -e "
+  s{__vers_str__\\b\\s*:\\s*\\d+\\.\\d+\\.\\d+\\b} {__vers_str__: ${VERS_PATCH}}g ;
+" mkdocs.yml
+fi
 
-problem_areas="$(
-    grep -En "${PROJECT}/latest\\b" /dev/null README.md docs/*.md || [ "${?}" -eq 1 ]
-    grep -En "^#+\\s+${MAJOR}\\.${MINOR}\\.${PATCH}([^[:alnum:]]|$)" /dev/null docs/notes.md || [ "${?}" -eq 1 ]
-)"
+git update-index -q --refresh
+
+if ! git diff-index --quiet HEAD -- ; then
+    git status
+    echo 1>&2 "$( basename "${0}" ): changes detected after substitutions"
+
+    exit 1
+fi
 
 set +x
+problem_areas="$(
+    grep -En "^#+\\s+${MAJOR}\\.${MINOR}\\.${PATCH}([^[:alnum:]]|$)" /dev/null mkdocs.yml docs/notes.md || [ "${?}" -eq 1 ]
+)"
 
 if [ -n "${problem_areas}" ] ; then
     echo '- - - - POTENTIAL PROBLEM AREAS - - - -'
     echo "${problem_areas}"
     echo '- - - - - - - - - - - - - - - - - - - -'
 
-    sh=$(ps -o comm -p "${$}" | awk 'NR == 2')
-    printf "Potential problem areas detected. Continue anyway [Y/n]? "
+    sh=$( ps -o comm -p "${$}" | awk 'NR == 2' )
+    _yes_no "Potential problem areas detected. Continue anyway?"
 
-    while true ; do
-        if [ "${sh%/zsh}" != "${sh}" ] ; then
-            read -k 1 -s  # zsh
-        else
-            read -n 1 -s  # everywhere else
-        fi
+    if [ "${REPLY}" = n ] ; then
+        git status
 
-        case "${REPLY}" in
-            Y|y|$'\n'|'')
-                REPLY=y
-                echo 'yes'
-                break
-                ;;
-            N|n)
-                REPLY=n
-                echo 'no'
-                break
-                ;;
-        esac
-
-        printf '\n[Y/n]? '
-    done
+        exit 1
+    fi
 fi
 
-if [ "${REPLY}" == n ] ; then
-    git status
-
-    exit 1
-fi
-
-set -ex
-git commit --all --message "Update version and release ${TAG}."
+set -x
 tox
 python -c 'from setuptools import setup ; setup()' sdist
 (
     . "${_REPO_DIR}/.tox/check/bin/activate"
-    twine check "dist/${PKG}-${VERS_PATCH}"[-.]*
+    twine check "dist/${PKG}-${VERSION}"[-.]*
     mike deploy --rebase --update-aliases "${VERS}" latest
 )
 git tag --force --message "$( cat <<EOF
