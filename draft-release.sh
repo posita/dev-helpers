@@ -45,16 +45,13 @@ if [ "${#}" -ne 0 ] ; then
     exit 1
 fi
 
-for _repo_dir_candidate in "${_MY_DIR}${_MY_DIR:+/}.." "${PWD}" ; do
-    if [ -d "${_repo_dir_candidate}/.git" ] ; then
-        _yes_no "Use \"${_repo_dir_candidate}\" as the repository directory?"
+if [ -d "${PWD}/.git" ] ; then
+    _yes_no "Use \"${PWD}\" as the repository directory?"
 
-        if [ "${REPLY}" = y ] ; then
-            _REPO_DIR="$( cd "${_repo_dir_candidate}" && pwd )"
-            break
-        fi
+    if [ "${REPLY}" = y ] ; then
+        _REPO_DIR="$( cd "${PWD}" && pwd )"
     fi
-done
+fi
 
 if [ -z "${_REPO_DIR}" ] ; then
     echo 1>&2 "$( basename "${0}" ): unable to find repository directory"
