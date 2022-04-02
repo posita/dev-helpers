@@ -45,15 +45,10 @@ if [ "${#}" -ne 0 ] ; then
     exit 1
 fi
 
-if [ -d "${PWD}/.git" ] ; then
-    _yes_no "Use \"${PWD}\" as the repository directory?"
+_REPO_DIR="$( git -C "${PWD}" rev-parse --show-toplevel )"
+_yes_no "Use \"${_REPO_DIR}\" as the repository directory?"
 
-    if [ "${REPLY}" = y ] ; then
-        _REPO_DIR="$( cd "${PWD}" && pwd )"
-    fi
-fi
-
-if [ -z "${_REPO_DIR}" ] ; then
+if [ "${REPLY}" != y ] ; then
     echo 1>&2 "$( basename "${0}" ): unable to find repository directory"
 
     exit 1
