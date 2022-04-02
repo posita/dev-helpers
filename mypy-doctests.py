@@ -31,7 +31,7 @@ PARSER = argparse.ArgumentParser(
 )
 PARSER.add_argument(
     "-a",
-    "--mypyp-arg",
+    "--mypy-arg",
     metavar="ARG",
     help="append ARG to mypy command",
     action="append",
