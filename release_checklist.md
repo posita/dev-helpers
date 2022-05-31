@@ -20,6 +20,8 @@ The following assumes you are working from the repository root and have a develo
   * If necessary, update copyright in [``LICENSE``](../LICENSE)
   * If necessary, update links to external resources (e.g., Binder Gists, etc.)
 
+* [ ] ``git tag [--force] vX.Y.Z``
+
 * [ ] ``git clean -Xdf [-n] [...]``
 
 * [ ] ``./helpers/draft-release.sh``
@@ -28,7 +30,7 @@ The following assumes you are working from the repository root and have a develo
   * Performs in-place version search/replace for select files
   * Runs ``tox``
   * Updates ``gh-pages``
-  * Tags current commit as ``vX.Y.Z``
+  * Re-tags current commit as ``vX.Y.Z``
   * See [``./helpers/draft-release.sh``](draft-release.sh) for details
 
 * [ ] ``printf 'latest: %s; currently signing: %s\n' "$( git describe latest )" "$( git describe --abbrev=0 )" ; git tag --force --sign "$( git describe --abbrev=0 )" && git tag --force latest`` and summarize [release notes](../docs/notes.md)
