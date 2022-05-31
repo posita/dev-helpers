@@ -141,6 +141,7 @@ fi
 
 set -x
 tox
+git clean -Xdf "${_REPO_DIR}/docs"
 python -c 'from setuptools import setup ; setup()' sdist
 (
     . "${_REPO_DIR}/.tox/check/bin/activate"
