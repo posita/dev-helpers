@@ -97,6 +97,7 @@ TAG="v${VERS_PATCH}"
 
 if [ -f README.md ] ; then
     perl -p -i -e "
+  s{\"${PROJECT}~=\\d+\\.\\d+\"} {\"${PROJECT}~=${VERS}\"}g ;
   s{\\.github\\.io/${PROJECT}/\\d+\\.\\d+\\/([^) \"]*)} {\\.github\\.io/${PROJECT}/${VERS}/\\1}g ;
   s{/${PROJECT}/([^/]+/)*v\\d+\\.\\d+\\.\\d+([/?])} {/${PROJECT}/\\1${TAG}\\2}g ;
   s{//pypi\\.org/([^/]+/)?${PKG}/\\d+\\.\\d+\\.\\d+/} {//pypi.org/\\1${PKG}/${VERS_PATCH}/}g ;
@@ -142,6 +143,7 @@ fi
 set -x
 tox
 git clean -Xdf "${_REPO_DIR}/docs"
+tox -e check
 python -c 'from setuptools import setup ; setup()' sdist
 (
     . "${_REPO_DIR}/.tox/check/bin/activate"
