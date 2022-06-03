@@ -35,11 +35,9 @@ The following assumes you are working from the repository root and have a develo
 
 * [ ] ``printf 'latest: %s; currently signing: %s\n' "$( git describe latest )" "$( git describe --abbrev=0 )" ; git tag --force --sign "$( git describe --abbrev=0 )" && git tag --force latest`` and summarize [release notes](../docs/notes.md)
 
-* [ ] ``git push [--force] origin "$( git describe --abbrev=0 )"``
-
 * [ ] ``./.tox/check/bin/mike serve`` and spot check docs (links to external references might be missing)
 
-* [ ] ``git push [--force] origin latest gh-pages``
+* [ ] ``git push [--force] origin "$( git describe --abbrev=0 )" latest gh-pages``
 
 * [ ] ``./.tox/check/bin/twine upload [--repository testpypi --username posita] [--username __token__ --sign] dist/*-X.Y.Z-*.whl``
   * See [Using TestPyPI with pip](https://packaging.python.org/guides/using-testpypi/#using-testpypi-with-pip)
