@@ -24,14 +24,14 @@ The following assumes you are working from the repository root and have a develo
 
 * [ ] ``git clean -Xdf [-n] [...]``
 
-* [ ] ``./helpers/draft-release.sh``
+* [ ] ``./draft-release.sh``
   * Guesses version number
   * Creates and checks distribution files in ``./dist``
   * Performs in-place version search/replace for select files
   * Runs ``tox``
   * Updates ``gh-pages``
   * Re-tags current commit as ``vX.Y.Z``
-  * See [``./helpers/draft-release.sh``](draft-release.sh) for details
+  * See [``./draft-release.sh``](draft-release.sh) for details
 
 * [ ] ``printf 'latest: %s; currently signing: %s\n' "$( git describe latest )" "$( git describe --abbrev=0 )" ; git tag --force --sign "$( git describe --abbrev=0 )" && git tag --force latest`` and summarize [release notes](../docs/notes.md)
 

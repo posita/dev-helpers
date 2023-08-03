@@ -57,7 +57,7 @@ fi
 set -x
 cd "${_REPO_DIR}"
 git update-index -q --refresh
-VERSION="$( python -m setuptools_scm | perl -pe 's/^Guessed Version ([^ ]+).*$/\1/' )"
+VERSION="$( python -m versioningit )"
 set +x
 
 if ! echo "${VERSION}" | grep -Eq '^\d+\.\d+\.\d+$' ; then
@@ -91,9 +91,12 @@ EOF
 PKG="$( python -c "${_GET_PKG_PY}" "${_REPO_DIR}/setup.cfg" )"
 PROJECT="$( python -c "${_GET_PROJECT_PY}" "${_REPO_DIR}/setup.cfg" )"
 VERSION="$( echo "${VERSION}" | perl -pe 's/\+.*$//' )"
-VERS="$( echo "${VERSION}" | perl -pe 's/^(\d+\.\d+)\.\d+(\.[^.]+)*$/\1/' )"
-VERS_PATCH="$( echo "${VERSION}" | perl -pe 's/^(\d+\.\d+\.\d+)(\.[^.]+)*$/\1/' )"
+VERS_PATCH="$( echo "${VERSION}" | perl -pe 's/^(\d+\.\d+\.\d+)(\.\d+)*$/\1/' )"
+MAJOR="$( echo "${VERS_PATCH}" | perl -pe 's/^(\d+)\.\d+\.\d+$/\1/' )"
+MINOR="$( echo "${VERS_PATCH}" | perl -pe 's/^\d+\.(\d+)\.\d+$/\1/' )"
+PATCH="$( echo "${VERS_PATCH}" | perl -pe 's/^\d+\.\d+\.(\d+)$/\1/' )"
 TAG="v${VERS_PATCH}"
+VERS="${MAJOR}.${MINOR}"
 
 if [ -f README.md ] ; then
     perl -p -i -e "
@@ -144,7 +147,7 @@ set -x
 tox
 git clean -Xdf "${_REPO_DIR}/docs"
 tox -e check
-python -c 'from setuptools import setup ; setup()' sdist
+python -c 'from setuptools import setup ; setup()' bdist_wheel
 (
     . "${_REPO_DIR}/.tox/check/bin/activate"
     twine check "dist/${PKG}-${VERSION}"[-.]*
